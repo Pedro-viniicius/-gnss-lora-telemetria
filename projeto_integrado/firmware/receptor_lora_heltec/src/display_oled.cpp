@@ -66,10 +66,8 @@ void DisplayOled::mostrar(const EstadoDisplayRx& e) {
   snprintf(linha, sizeof(linha), "Lo:%.5f", e.gnss.longitude_1e7 / 1e7);
   display_.drawString(0, 36, linha);
 
-  char c = (e.ultimoComandoTeclado >= 32 && e.ultimoComandoTeclado < 127)
-               ? (char)e.ultimoComandoTeclado
-               : '-';
-  snprintf(linha, sizeof(linha), "Seq:%u Cmd:%c", (unsigned)e.sequencia, c);
+  snprintf(linha, sizeof(linha), "Alt:%.1fm Seq:%u",
+           e.gnss.altitude_mm / 1000.0, (unsigned)e.sequencia);
   display_.drawString(0, 48, linha);
 
   display_.display();

@@ -42,7 +42,6 @@ void setup() {
   estado.rssi = 0;
   estado.snr = 0;
   estado.idadeUltimoPacoteMs = UINT32_MAX;
-  estado.ultimoComandoTeclado = 0;
 
   Serial.println(F("Inicializacao concluida. Em modo de recepcao."));
 }
@@ -80,12 +79,6 @@ void loop() {
         TelemetriaGnss t;
         if (lerTelemetria(pkt, t)) {
           estado.gnss = t;
-          estado.ultimoComandoTeclado = t.ultimo_comando_teclado;
-        }
-      } else if (pkt.tipo == MSG_EVENTO_TECLADO) {
-        EventoTeclado ev;
-        if (lerEventoTeclado(pkt, ev)) {
-          estado.ultimoComandoTeclado = ev.tecla;
         }
       }
     }

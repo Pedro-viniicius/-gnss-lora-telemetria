@@ -278,6 +278,43 @@ bool lerStatusTransmissor(const Pacote& pkt, StatusTransmissor& saida) {
   return true;
 }
 
+// --- Payloads tipados: StatusArmazenamento ----------------------------------
+void montarPacoteStatusArmazenamento(Pacote& pkt, uint8_t idRemetente,
+                                     uint16_t sequencia,
+                                     const StatusArmazenamento& s) {
+  pkt.versao = VERSAO_PROTOCOLO;
+  pkt.tipo = MSG_STATUS_ARMAZENAMENTO;
+  pkt.id_remetente = idRemetente;
+  pkt.sequencia = sequencia;
+  pkt.flags = 0;
+  pkt.tamanho_payload = TAMANHO_PAYLOAD_STATUS_ARMAZENAMENTO;
+
+  uint8_t* p = pkt.payload;
+  escreverU32LE(&p[0], s.uptime_ms);
+  p[4] = s.estado;
+  p[5] = s.presente;
+  escreverU32LE(&p[6], s.kb_livres);
+  escreverU32LE(&p[10], s.arquivos_escritos);
+  escreverU32LE(&p[14], s.bytes_escritos);
+  escreverU32LE(&p[18], s.registros_descartados);
+}
+
+bool lerStatusArmazenamento(const Pacote& pkt, StatusArmazenamento& saida) {
+  if (pkt.tipo != MSG_STATUS_ARMAZENAMENTO ||
+      pkt.tamanho_payload != TAMANHO_PAYLOAD_STATUS_ARMAZENAMENTO) {
+    return false;
+  }
+  const uint8_t* p = pkt.payload;
+  saida.uptime_ms = lerU32LE(&p[0]);
+  saida.estado = p[4];
+  saida.presente = p[5];
+  saida.kb_livres = lerU32LE(&p[6]);
+  saida.arquivos_escritos = lerU32LE(&p[10]);
+  saida.bytes_escritos = lerU32LE(&p[14]);
+  saida.registros_descartados = lerU32LE(&p[18]);
+  return true;
+}
+
 // --- HEARTBEAT --------------------------------------------------------------
 void montarPacoteHeartbeat(Pacote& pkt, uint8_t idRemetente, uint16_t sequencia,
                            uint32_t uptime_ms) {

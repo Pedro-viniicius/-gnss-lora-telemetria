@@ -10,6 +10,7 @@
 
 #include "maquina_estados.h"
 #include "protocolo.h"
+#include "servico_gnss.h"
 #include "servico_uart_lora.h"
 
 class Diagnostico {
@@ -20,8 +21,9 @@ class Diagnostico {
   // corresponde a um fix atual (nao antigo).
   void atualizar(uint32_t agoraMs, const MaquinaEstados& estado,
                  const protocolo::TelemetriaGnss& gnss, bool gnssValido,
-                 uint32_t idadeGnssMs, const ServicoUartLora& uart,
-                 uint8_t modoTeclado, uint16_t sequenciaAtual);
+                 uint32_t idadeGnssMs, const ServicoGnss& servicoGnss,
+                 const ServicoUartLora& uart,
+                 uint16_t sequenciaAtual);
 
  private:
   uint32_t instante_ultimo_ms_;

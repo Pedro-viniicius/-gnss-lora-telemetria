@@ -129,6 +129,11 @@ void montarPacoteStatusTransmissor(Pacote& pkt, uint8_t idRemetente,
                                    const StatusTransmissor& status);
 bool lerStatusTransmissor(const Pacote& pkt, StatusTransmissor& saida);
 
+void montarPacoteStatusArmazenamento(Pacote& pkt, uint8_t idRemetente,
+                                     uint16_t sequencia,
+                                     const StatusArmazenamento& status);
+bool lerStatusArmazenamento(const Pacote& pkt, StatusArmazenamento& saida);
+
 // Monta um HEARTBEAT simples (payload = uptime_ms em 4 bytes).
 void montarPacoteHeartbeat(Pacote& pkt, uint8_t idRemetente, uint16_t sequencia,
                            uint32_t uptime_ms);

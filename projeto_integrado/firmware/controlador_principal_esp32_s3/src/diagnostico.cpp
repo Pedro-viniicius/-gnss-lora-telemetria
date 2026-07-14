@@ -18,8 +18,10 @@ static const char* nomeFix(uint8_t tipoFix) {
 
 void Diagnostico::atualizar(uint32_t agoraMs, const MaquinaEstados& estado,
                             const TelemetriaGnss& gnss, bool gnssValido,
-                            uint32_t idadeGnssMs, const ServicoUartLora& uart,
-                            uint8_t modoTeclado, uint16_t sequenciaAtual) {
+                            uint32_t idadeGnssMs,
+                            const ServicoGnss& servicoGnss,
+                            const ServicoUartLora& uart,
+                            uint16_t sequenciaAtual) {
   if ((uint32_t)(agoraMs - instante_ultimo_ms_) < PERIODO_DIAGNOSTICO_MS) {
     return;
   }
@@ -61,6 +63,38 @@ void Diagnostico::atualizar(uint32_t agoraMs, const MaquinaEstados& estado,
     Serial.println(idadeGnssMs);
   }
 
+  Serial.print(F("GNSS bytes: "));
+  Serial.print(servicoGnss.bytesRecebidos());
+  Serial.print(F(" | NMEA ok: "));
+  Serial.print(servicoGnss.sentencasValidas());
+  Serial.print(F(" | invalidas: "));
+  Serial.print(servicoGnss.sentencasInvalidas());
+  Serial.print(F(" | estouros: "));
+  Serial.println(servicoGnss.sentencasEstouradas());
+
+  Serial.print(F("GNSS baud atual: "));
+  Serial.print(servicoGnss.baudAtual());
+  Serial.print(F(" | varredura baud: "));
+  Serial.print(servicoGnss.varreduraBaudAtiva() ? F("ATIVA") : F("PARADA"));
+  Serial.print(F(" | bytes neste baud: "));
+  Serial.println(servicoGnss.bytesNoBaudAtual());
+
+  Serial.print(F("GNSS GGA/RMC/GST: "));
+  Serial.print(servicoGnss.sentencasGga());
+  Serial.print(F("/"));
+  Serial.print(servicoGnss.sentencasRmc());
+  Serial.print(F("/"));
+  Serial.print(servicoGnss.sentencasGst());
+  Serial.print(F(" | ultima: "));
+  Serial.print(servicoGnss.ultimoTipoSentenca());
+  Serial.print(F(" | idade ultimo byte(ms): "));
+  uint32_t idadeByte = servicoGnss.idadeUltimoByteMs();
+  if (idadeByte == UINT32_MAX) {
+    Serial.println(F("sem bytes"));
+  } else {
+    Serial.println(idadeByte);
+  }
+
   Serial.print(F("Enlace LoRa/UART: "));
   Serial.print(uart.conectado() ? F("CONECTADO") : F("DESCONECTADO"));
   Serial.print(F(" | enviados: "));
@@ -69,6 +103,20 @@ void Diagnostico::atualizar(uint32_t agoraMs, const MaquinaEstados& estado,
   Serial.print(uart.quadrosValidos());
   Serial.print(F(" | rx invalidos: "));
   Serial.println(uart.quadrosInvalidos());
+
+  Serial.print(F("UART LoRa bruto: bytes rx: "));
+  Serial.print(uart.bytesRecebidos());
+  Serial.print(F(" | delimitadores 0x00: "));
+  Serial.print(uart.delimitadoresRecebidos());
+  Serial.print(F(" | bytes no buffer: "));
+  Serial.print(uart.bytesNoBufferAtual());
+  Serial.print(F(" | idade ultimo byte(ms): "));
+  uint32_t idadeByteLora = uart.idadeUltimoByteMs();
+  if (idadeByteLora == UINT32_MAX) {
+    Serial.println(F("sem bytes"));
+  } else {
+    Serial.println(idadeByteLora);
+  }
 
   StatusTransmissor st;
   if (uart.obterUltimoStatus(st)) {
@@ -80,9 +128,8 @@ void Diagnostico::atualizar(uint32_t agoraMs, const MaquinaEstados& estado,
     Serial.println(st.pacotes_descartados);
   }
 
-  Serial.print(F("Modo teclado: "));
-  Serial.print(modoTeclado);
-  Serial.print(F(" | sequencia: "));
+  Serial.print(F("Sequencia atual: "));
   Serial.println(sequenciaAtual);
+  Serial.println(F("Teclado: desabilitado | Cartao SD: desabilitado"));
   Serial.println();
 }

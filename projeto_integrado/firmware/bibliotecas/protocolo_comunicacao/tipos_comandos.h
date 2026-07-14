@@ -18,12 +18,13 @@ enum TipoMensagem : uint8_t {
   MSG_STATUS_TRANSMISSOR = 0x04,  // status da Heltec TX -> controlador (UART)
   MSG_CONFIRMACAO_UART   = 0x05,  // ACK de quadro recebido pela UART
   MSG_ERRO               = 0x06,  // notificacao de erro
-  MSG_HEARTBEAT          = 0x07   // sinal de vida periodico
+  MSG_HEARTBEAT          = 0x07,  // sinal de vida periodico
+  MSG_STATUS_ARMAZENAMENTO = 0x08 // status do cartao microSD do controlador
 };
 
 // Retorna true se 'tipo' e um TipoMensagem conhecido.
 inline bool tipoMensagemConhecido(uint8_t tipo) {
-  return tipo >= MSG_TELEMETRIA_GNSS && tipo <= MSG_HEARTBEAT;
+  return tipo >= MSG_TELEMETRIA_GNSS && tipo <= MSG_STATUS_ARMAZENAMENTO;
 }
 
 // Sub-tipo de um evento de teclado.
@@ -66,6 +67,29 @@ struct StatusTransmissor {
 };
 
 static const uint16_t TAMANHO_PAYLOAD_STATUS_TRANSMISSOR = 27;
+
+// Estado do subsistema de armazenamento (cartao microSD).
+enum EstadoArmazenamento : uint8_t {
+  SD_DESABILITADO     = 0,  // compilado sem SD (HABILITAR_CARTAO_SD=0)
+  SD_PRONTO           = 1,  // cartao montado e gravando
+  SD_SEM_CARTAO       = 2,  // nenhum cartao detectado/montado
+  SD_CHEIO            = 3,  // espaco livre abaixo do minimo
+  SD_FALHA            = 4   // erro de I/O (removido/corrompido)
+};
+
+// Status do armazenamento reportado pelo controlador. Payload serializado:
+// 4 + 1 + 1 + 4 + 4 + 4 + 4 = 22 bytes.
+struct StatusArmazenamento {
+  uint32_t uptime_ms;
+  uint8_t  estado;               // ver EstadoArmazenamento
+  uint8_t  presente;             // 1 = cartao presente/montado, 0 = nao
+  uint32_t kb_livres;            // espaco livre em kilobytes
+  uint32_t arquivos_escritos;    // numero de arquivos de log criados
+  uint32_t bytes_escritos;       // total de bytes gravados desde o boot
+  uint32_t registros_descartados;// linhas perdidas por buffer cheio/falha
+};
+
+static const uint16_t TAMANHO_PAYLOAD_STATUS_ARMAZENAMENTO = 22;
 
 }  // namespace protocolo
 

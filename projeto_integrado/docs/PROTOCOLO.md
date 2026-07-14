@@ -54,6 +54,7 @@ string frágil `"T:25.0 H:50.0"` da referência.
 | 0x05 | `CONFIRMACAO_UART` | Heltec TX → controlador (UART, ACK) |
 | 0x06 | `ERRO` | reservado |
 | 0x07 | `HEARTBEAT` | controlador → LoRa |
+| 0x08 | `STATUS_ARMAZENAMENTO` | controlador → LoRa |
 
 ## Payload — TELEMETRIA_GNSS (22 bytes)
 
@@ -71,7 +72,11 @@ string frágil `"T:25.0 H:50.0"` da referência.
 
 `TipoFix`: 0=SEM_FIX, 1=STANDALONE, 2=DIFERENCIAL, 3=RTK_FLOAT, 4=RTK_FIXED.
 Flags GNSS: `DADOS_SIMULADOS(0x01)`, `DADOS_ANTIGOS(0x02)`, `TEM_ALTITUDE(0x04)`,
-`TEM_PRECISAO(0x08)`.
+`TEM_PRECISAO(0x08)`, `SD_ATIVO(0x10)`, `SD_FALHA(0x20)`.
+
+As flags de SD indicam apenas o estado do armazenamento local no controlador.
+Elas não bloqueiam a aceitação da telemetria: `SD_FALHA` significa cartão
+ausente, cheio ou com erro de I/O, mas GNSS/teclado/UART/LoRa seguem operando.
 
 ## Payload — EVENTO_TECLADO (11 bytes)
 
@@ -89,6 +94,38 @@ Flags GNSS: `DADOS_SIMULADOS(0x01)`, `DADOS_ANTIGOS(0x02)`, `TEM_ALTITUDE(0x04)`
 `transmissoes_lora`, `timeouts_lora`, `pacotes_descartados` (uint32 cada),
 `ultima_sequencia` (uint16), `estado_tx` (uint8).
 
+## Payload — STATUS_ARMAZENAMENTO (22 bytes)
+
+| Offset | Tam | Campo |
+|---|---|---|
+| 0 | 4 | `uptime_ms` (uint32) |
+| 4 | 1 | `estado` (`EstadoArmazenamento`) |
+| 5 | 1 | `presente` (1=cartão montado/presente, 0=não) |
+| 6 | 4 | `kb_livres` (uint32) |
+| 10 | 4 | `arquivos_escritos` (uint32) |
+| 14 | 4 | `bytes_escritos` (uint32) |
+| 18 | 4 | `registros_descartados` (uint32) |
+
+`EstadoArmazenamento`: 0=`DESABILITADO`, 1=`PRONTO`, 2=`SEM_CARTAO`,
+3=`CHEIO`, 4=`FALHA`.
+
+## Formato CSV no microSD
+
+O CSV é gravado apenas no controlador, em arquivos `LOG0001.CSV`,
+`LOG0002.CSV` etc. Separador: `;`.
+
+Cabeçalho:
+
+```text
+tipo;uptime_ms;sequencia;latitude;longitude;altitude_m;fix;satelites;precisao_mm;comando_tecla;valor_ou_flags
+```
+
+Linhas `TELEMETRIA` carregam os campos GNSS e usam `valor_ou_flags` para as
+flags da telemetria. Linhas `EVENTO` deixam campos GNSS vazios e usam
+`comando_tecla`/`valor_ou_flags` para o evento do teclado. A formatação é feita
+por `formato_registro.{h,cpp}`, sem `String` e com verificação de capacidade via
+`snprintf`.
+
 ## Regras de rejeição do decodificador
 
 O decodificador rejeita, com resultado específico: pacote menor que o mínimo,
@@ -104,10 +141,14 @@ desconhecido.
   `TIMEOUT` no OLED e aviso periódico no Serial.
 - **Transmissor (rádio)**: ocupado por mais de `TX_WATCHDOG_MS` sem callback →
   watchdog libera o rádio e conta um timeout.
+- **microSD (controlador)**: flush a cada `INTERVALO_FLUSH_SD_MS`; verificação
+  de saúde/remontagem a cada `INTERVALO_VERIFICACAO_SD_MS`; status enviado por
+  `STATUS_ARMAZENAMENTO` a cada `PERIODO_STATUS_ARMAZENAMENTO_MS`.
 
 ## Funções testáveis no host
 
 `calcularCrc16`, `codificarPacote`, `decodificarPacote`, `cobsEncode`,
 `cobsDecode`, `enquadrarParaUart`, `desenquadrarDeUart`, `montarPacoteTelemetria`
-/`lerTelemetria`, `montarPacoteEventoTeclado`/`lerEventoTeclado`. Ver
-`docs/TESTES.md`.
+/`lerTelemetria`, `montarPacoteEventoTeclado`/`lerEventoTeclado`,
+`montarPacoteStatusArmazenamento`/`lerStatusArmazenamento`,
+`formatarLinhaTelemetriaCsv` e `formatarLinhaEventoCsv`. Ver `docs/TESTES.md`.

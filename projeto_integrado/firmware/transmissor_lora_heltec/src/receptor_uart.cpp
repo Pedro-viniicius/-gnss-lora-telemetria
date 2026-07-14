@@ -10,9 +10,12 @@ ReceptorUart::ReceptorUart()
       rx_pos_(0),
       quadros_validos_(0),
       quadros_invalidos_(0),
+      bytes_recebidos_(0),
+      delimitadores_recebidos_(0),
       ultima_sequencia_(0),
       ultimo_tipo_(0),
       instante_ultimo_quadro_ms_(0),
+      instante_ultimo_byte_ms_(0),
       recebeu_algo_(false),
       fila_ini_(0),
       fila_fim_(0),
@@ -23,6 +26,14 @@ void ReceptorUart::iniciar(HardwareSerial& serial) {
   serial_->begin(CONTROLADOR_BAUD, SERIAL_8N1, CONTROLADOR_PINO_RX,
                  CONTROLADOR_PINO_TX);
   rx_pos_ = 0;
+#if HABILITAR_SERIAL_TX_DIAGNOSTICO
+  Serial.print(F("[UART-CONTROLADOR] UART iniciada | RX GPIO"));
+  Serial.print(CONTROLADOR_PINO_RX);
+  Serial.print(F(" | TX GPIO"));
+  Serial.print(CONTROLADOR_PINO_TX);
+  Serial.print(F(" | baud "));
+  Serial.println(CONTROLADOR_BAUD);
+#endif
 }
 
 void ReceptorUart::atualizar() {
@@ -31,7 +42,10 @@ void ReceptorUart::atualizar() {
   }
   while (serial_->available() > 0) {
     uint8_t b = (uint8_t)serial_->read();
+    ++bytes_recebidos_;
+    instante_ultimo_byte_ms_ = millis();
     if (b == 0x00) {
+      ++delimitadores_recebidos_;
       if (rx_pos_ > 0) {
         processarQuadro(rx_, rx_pos_);
       }
@@ -102,4 +116,11 @@ uint32_t ReceptorUart::idadeUltimoQuadroMs() const {
     return UINT32_MAX;
   }
   return (uint32_t)(millis() - instante_ultimo_quadro_ms_);
+}
+
+uint32_t ReceptorUart::idadeUltimoByteMs() const {
+  if (bytes_recebidos_ == 0) {
+    return UINT32_MAX;
+  }
+  return (uint32_t)(millis() - instante_ultimo_byte_ms_);
 }

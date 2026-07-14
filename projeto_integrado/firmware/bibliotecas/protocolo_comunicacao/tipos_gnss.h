@@ -32,7 +32,9 @@ enum FlagsGnss : uint8_t {
   GNSS_FLAG_DADOS_SIMULADOS = 0x01,  // dados gerados em modo de diagnostico
   GNSS_FLAG_DADOS_ANTIGOS   = 0x02,  // idade dos dados acima do limite (stale)
   GNSS_FLAG_TEM_ALTITUDE    = 0x04,  // campo de altitude e valido
-  GNSS_FLAG_TEM_PRECISAO    = 0x08   // campo de precisao horizontal e valido
+  GNSS_FLAG_TEM_PRECISAO    = 0x08,  // campo de precisao horizontal e valido
+  GNSS_FLAG_SD_ATIVO        = 0x10,  // cartao microSD pronto e gravando
+  GNSS_FLAG_SD_FALHA        = 0x20   // cartao microSD ausente/cheio/em falha
 };
 
 // Estrutura de telemetria GNSS. Serializada explicitamente (ver protocolo.h);

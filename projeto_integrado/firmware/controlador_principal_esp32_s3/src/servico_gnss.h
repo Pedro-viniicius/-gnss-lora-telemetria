@@ -48,6 +48,20 @@ class ServicoGnss {
   // Idade, em ms, do ultimo dado de posicao valido (UINT32_MAX se nunca houve).
   uint32_t idadeDadosMs() const;
 
+  // Contadores de rastreamento para bancada.
+  uint32_t bytesRecebidos() const { return bytes_recebidos_; }
+  uint32_t sentencasValidas() const { return sentencas_validas_; }
+  uint32_t sentencasInvalidas() const { return sentencas_invalidas_; }
+  uint32_t sentencasEstouradas() const { return sentencas_estouradas_; }
+  uint32_t sentencasGga() const { return sentencas_gga_; }
+  uint32_t sentencasRmc() const { return sentencas_rmc_; }
+  uint32_t sentencasGst() const { return sentencas_gst_; }
+  uint32_t idadeUltimoByteMs() const;
+  const char* ultimoTipoSentenca() const { return ultimo_tipo_sentenca_; }
+  uint32_t baudAtual() const { return baud_atual_; }
+  bool varreduraBaudAtiva() const { return varredura_baud_ativa_; }
+  uint32_t bytesNoBaudAtual() const { return bytes_recebidos_ - bytes_inicio_baud_; }
+
   // Habilita/desabilita a simulacao de dados GNSS (modo diagnostico).
   void habilitarSimulacao(bool habilitar);
   bool simulacaoHabilitada() const { return simulacao_; }
@@ -72,6 +86,22 @@ class ServicoGnss {
   bool tem_fix_;                         // ultimo GGA indicou fix?
   bool simulacao_;
   uint32_t instante_simulacao_ms_;
+  uint32_t bytes_recebidos_;
+  uint32_t sentencas_validas_;
+  uint32_t sentencas_invalidas_;
+  uint32_t sentencas_estouradas_;
+  uint32_t sentencas_gga_;
+  uint32_t sentencas_rmc_;
+  uint32_t sentencas_gst_;
+  uint32_t instante_ultimo_byte_ms_;
+  char ultimo_tipo_sentenca_[4];
+  uint32_t baud_atual_;
+  uint8_t indice_baud_;
+  uint32_t instante_inicio_baud_ms_;
+  uint32_t bytes_inicio_baud_;
+  uint32_t sentencas_validas_inicio_baud_;
+  bool varredura_baud_ativa_;
+  bool baud_confirmado_;
 
   void processarByte(char c);
   void processarLinha(char* linha, size_t tamanho);
@@ -80,6 +110,8 @@ class ServicoGnss {
   void parseRMC(char* linha);
   void parseGST(char* linha);
   void gerarSimulacao();
+  void reiniciarUartGnss(uint32_t baud);
+  void atualizarVarreduraBaud();
 };
 
 #endif  // SERVICO_GNSS_H

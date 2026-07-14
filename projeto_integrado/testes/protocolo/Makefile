@@ -9,7 +9,8 @@ CXXFLAGS := -std=c++11 -Wall -Wextra -Wpedantic -O2 -I$(LIB_DIR)
 FONTES := test_protocolo.cpp \
           $(LIB_DIR)/protocolo.cpp \
           $(LIB_DIR)/crc16.cpp \
-          $(LIB_DIR)/cobs.cpp
+          $(LIB_DIR)/cobs.cpp \
+          $(LIB_DIR)/formato_registro.cpp
 
 ALVO := test_protocolo
 

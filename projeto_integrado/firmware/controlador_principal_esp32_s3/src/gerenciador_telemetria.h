@@ -1,8 +1,7 @@
 // gerenciador_telemetria.h
 // -----------------------------------------------------------------------------
 // Monta pacotes de telemetria GNSS periodicos e gerencia o contador global de
-// sequencia usado por TODOS os pacotes enviados pelo controlador (telemetria e
-// eventos de teclado compartilham o mesmo espaco de sequencia).
+// sequencia usado pelos pacotes enviados pelo controlador.
 // -----------------------------------------------------------------------------
 #ifndef GERENCIADOR_TELEMETRIA_H
 #define GERENCIADOR_TELEMETRIA_H
@@ -20,12 +19,11 @@ class GerenciadorTelemetria {
 
   uint16_t sequenciaAtual() const { return sequencia_; }
 
-  // Monta um pacote de telemetria a partir de um snapshot do GNSS, injetando o
-  // ultimo comando de teclado confirmado e um numero de sequencia novo.
+  // Monta um pacote de telemetria a partir de um snapshot do GNSS. O campo
+  // legado "ultimo_comando_teclado" vai zerado nesta versao sem teclado.
   void montarTelemetria(protocolo::TelemetriaGnss snapshot,
-                        uint8_t ultimoComandoTeclado,
                         protocolo::Pacote& saida) {
-    snapshot.ultimo_comando_teclado = ultimoComandoTeclado;
+    snapshot.ultimo_comando_teclado = 0;
     protocolo::montarPacoteTelemetria(saida, protocolo::ID_CONTROLADOR,
                                       proximaSequencia(), snapshot);
   }

@@ -19,7 +19,6 @@ struct EstadoDisplayRx {
   int16_t rssi;
   int8_t snr;
   uint32_t idadeUltimoPacoteMs;
-  uint8_t ultimoComandoTeclado;
 };
 
 class DisplayOled {

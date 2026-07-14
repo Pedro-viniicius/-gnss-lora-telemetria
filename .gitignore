@@ -13,6 +13,10 @@ projeto_integrado/testes/protocolo/test_protocolo
 # Configurações de IDE
 .vscode/
 .idea/
+compile_commands.json
+
+# Clones externos usados apenas como referência local
+projeto_integrado/referencias/UM980-RTK-Geofencing/
 
 # Sistema
 .DS_Store

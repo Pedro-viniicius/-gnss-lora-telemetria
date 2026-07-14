@@ -17,7 +17,6 @@ static const char* nomeFix(uint8_t t) {
 static const char* nomeTipo(uint8_t t) {
   switch (t) {
     case MSG_TELEMETRIA_GNSS: return "TELEMETRIA_GNSS";
-    case MSG_EVENTO_TECLADO:  return "EVENTO_TECLADO";
     case MSG_COMANDO:         return "COMANDO";
     case MSG_HEARTBEAT:       return "HEARTBEAT";
     default:                  return "OUTRO";
@@ -69,21 +68,6 @@ void DiagnosticoRx::imprimirPacote(const Pacote& pkt, int16_t rssi, int8_t snr,
       }
       Serial.print(F("Uptime controlador(ms): "));
       Serial.println(t.uptime_ms);
-      char c = (t.ultimo_comando_teclado >= 32 && t.ultimo_comando_teclado < 127)
-                   ? (char)t.ultimo_comando_teclado
-                   : '-';
-      Serial.print(F("Ultimo comando teclado: "));
-      Serial.println(c);
-    }
-  } else if (pkt.tipo == MSG_EVENTO_TECLADO) {
-    EventoTeclado ev;
-    if (lerEventoTeclado(pkt, ev)) {
-      Serial.print(F("Tecla: "));
-      Serial.print((char)ev.tecla);
-      Serial.print(F(" | tipo_evento: "));
-      Serial.print(ev.tipo_evento);
-      Serial.print(F(" | valor: "));
-      Serial.println(ev.valor_numerico);
     }
   } else if (pkt.tipo == MSG_HEARTBEAT) {
     Serial.print(F("Heartbeat uptime(ms): "));

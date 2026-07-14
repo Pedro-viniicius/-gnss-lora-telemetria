@@ -39,6 +39,10 @@ class ServicoUartLora {
   uint32_t quadrosValidos() const { return quadros_validos_; }
   uint32_t quadrosInvalidos() const { return quadros_invalidos_; }
   uint32_t pacotesEnviados() const { return pacotes_enviados_; }
+  uint32_t bytesRecebidos() const { return bytes_recebidos_; }
+  uint32_t delimitadoresRecebidos() const { return delimitadores_recebidos_; }
+  size_t bytesNoBufferAtual() const { return rx_pos_; }
+  uint32_t idadeUltimoByteMs() const;
 
  private:
   HardwareSerial* serial_;
@@ -56,6 +60,9 @@ class ServicoUartLora {
   uint32_t quadros_validos_;
   uint32_t quadros_invalidos_;
   uint32_t pacotes_enviados_;
+  uint32_t bytes_recebidos_;
+  uint32_t delimitadores_recebidos_;
+  uint32_t instante_ultimo_byte_ms_;
 
   void processarQuadro(const uint8_t* quadro, size_t tamanho);
 };

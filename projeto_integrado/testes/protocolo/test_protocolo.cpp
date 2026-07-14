@@ -10,6 +10,7 @@
 #include <cstring>
 #include <cstdint>
 
+#include "formato_registro.h"
 #include "protocolo.h"
 
 using namespace protocolo;
@@ -289,6 +290,82 @@ static void testeDeteccaoDuplicataESequencia() {
   VERIFICAR(!dup && !falt, "rollover 65535->0 tratado como normal");
 }
 
+static void testeStatusArmazenamento() {
+  std::printf("[ARMAZENAMENTO] serializacao de StatusArmazenamento\n");
+  StatusArmazenamento s;
+  s.uptime_ms = 777000;
+  s.estado = SD_PRONTO;
+  s.presente = 1;
+  s.kb_livres = 15000000u;      // ~15 GB em KB
+  s.arquivos_escritos = 3;
+  s.bytes_escritos = 4000000000u;  // proximo do limite de uint32
+  s.registros_descartados = 12;
+
+  Pacote pkt;
+  montarPacoteStatusArmazenamento(pkt, ID_CONTROLADOR, 99, s);
+  uint8_t buf[TAMANHO_MAXIMO_PACOTE];
+  size_t n = codificarPacote(pkt, buf, sizeof(buf));
+  VERIFICAR(n > 0, "codifica StatusArmazenamento");
+
+  Pacote dec;
+  // Em modo estrito, 0x08 deve ser reconhecido como tipo valido.
+  VERIFICAR(decodificarPacote(buf, n, dec, true) == DECODE_OK,
+            "MSG_STATUS_ARMAZENAMENTO reconhecido em modo estrito");
+  VERIFICAR(dec.tipo == MSG_STATUS_ARMAZENAMENTO, "tipo preservado");
+
+  StatusArmazenamento saida;
+  VERIFICAR(lerStatusArmazenamento(dec, saida), "lerStatusArmazenamento true");
+  VERIFICAR(saida.estado == SD_PRONTO, "estado preservado");
+  VERIFICAR(saida.presente == 1, "presente preservado");
+  VERIFICAR(saida.kb_livres == 15000000u, "kb_livres preservado");
+  VERIFICAR(saida.bytes_escritos == 4000000000u, "bytes_escritos no limite");
+  VERIFICAR(saida.registros_descartados == 12, "descartados preservado");
+}
+
+static void testeFormatoCsv() {
+  std::printf("[CSV] formatacao de linhas de log\n");
+  char buf[256];
+
+  size_t nc = cabecalhoCsv(buf, sizeof(buf));
+  VERIFICAR(nc > 0 && std::strstr(buf, "latitude") != nullptr,
+            "cabecalho contem coluna 'latitude'");
+  VERIFICAR(std::strchr(buf, ';') != nullptr, "cabecalho usa separador ';'");
+
+  TelemetriaGnss t;
+  t.uptime_ms = 123456;
+  t.latitude_1e7 = -212255000;   // -21.2255000
+  t.longitude_1e7 = -449931000;  // -44.9931000
+  t.altitude_mm = 919500;        // 919.500 m
+  t.tipo_fix = FIX_RTK_FLOAT;
+  t.satelites = 18;
+  t.precisao_horizontal_mm = 300;
+  t.ultimo_comando_teclado = '7';
+  t.flags = GNSS_FLAG_TEM_ALTITUDE | GNSS_FLAG_SD_ATIVO;
+
+  size_t nt = formatarLinhaTelemetriaCsv(buf, sizeof(buf), t, 4242);
+  VERIFICAR(nt > 0, "linha de telemetria formatada");
+  VERIFICAR(std::strstr(buf, "TELEMETRIA;") == buf, "linha inicia com TELEMETRIA;");
+  VERIFICAR(std::strstr(buf, "-21.2255000") != nullptr, "latitude com sinal e 7 casas");
+  VERIFICAR(std::strstr(buf, "-44.9931000") != nullptr, "longitude formatada");
+  VERIFICAR(std::strstr(buf, "919.500") != nullptr, "altitude em metros (3 casas)");
+  VERIFICAR(buf[nt - 1] == '\n', "linha termina com nova linha");
+
+  EventoTeclado e;
+  e.uptime_ms = 5000;
+  e.tecla = '#';
+  e.tipo_evento = EVT_CONFIRMACAO_NUMERO;
+  e.valor_numerico = 123;
+  e.tamanho_entrada = 3;
+  size_t ne = formatarLinhaEventoCsv(buf, sizeof(buf), e, 7);
+  VERIFICAR(ne > 0 && std::strstr(buf, "EVENTO;") == buf, "linha de evento formatada");
+  VERIFICAR(std::strstr(buf, ";123\n") != nullptr, "valor numerico presente");
+
+  // Buffer pequeno deve falhar com 0 (sem estouro).
+  char pequeno[8];
+  VERIFICAR(formatarLinhaTelemetriaCsv(pequeno, sizeof(pequeno), t, 1) == 0,
+            "buffer pequeno retorna 0 (sem estouro)");
+}
+
 int main() {
   std::printf("==== Testes do protocolo_comunicacao ====\n\n");
   testeCrcVetoresConhecidos();
@@ -300,6 +377,8 @@ int main() {
   testeEventoTeclado();
   testeEnquadramentoUart();
   testeDeteccaoDuplicataESequencia();
+  testeStatusArmazenamento();
+  testeFormatoCsv();
 
   std::printf("\n==== Resultado: %d/%d testes passaram, %d falha(s) ====\n",
               g_total - g_falhas, g_total, g_falhas);

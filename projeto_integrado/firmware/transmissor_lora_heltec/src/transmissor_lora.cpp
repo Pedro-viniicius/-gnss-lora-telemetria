@@ -24,7 +24,9 @@ TransmissorLora::TransmissorLora()
 void TransmissorLora::iniciar() {
   instancia_ = this;
 
-  Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
+  // Nao chamamos Mcu.begin() aqui: nas versoes atuais da biblioteca Heltec essa
+  // chamada dispara uma validacao de licenca e reinicia a placa quando a licenca
+  // nao esta provisionada. Para LoRa P2P usamos diretamente a API Radio.*.
 
   s_radioEvents.TxDone = TransmissorLora::aoTxDone;
   s_radioEvents.TxTimeout = TransmissorLora::aoTxTimeout;
