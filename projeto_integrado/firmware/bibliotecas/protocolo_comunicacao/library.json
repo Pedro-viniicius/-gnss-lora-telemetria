@@ -1,0 +1,12 @@
+{
+  "name": "protocolo_comunicacao",
+  "version": "1.0.0",
+  "description": "Protocolo binario versionado (CRC16-CCITT + COBS) compartilhado pelos firmwares do controlador ESP32-S3, transmissor e receptor LoRa Heltec. C++ puro, testavel no host.",
+  "keywords": ["protocolo", "lora", "gnss", "crc16", "cobs"],
+  "license": "MIT",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "srcFilter": ["+<*.cpp>"]
+  }
+}
