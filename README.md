@@ -1,0 +1,1 @@
+# -gnss-lora-telemetria
